@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Germanos — Painel de Vendas</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=DM+Serif+Display&display=swap" rel="stylesheet" />
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+  :root {
+    --brand:       #C8102E;
+    --brand-dark:  #8B0000;
+    --brand-light: #fdf2f4;
+    --bg:          #f4f5f7;
+    --card:        #ffffff;
+    --text:        #1a1a2e;
+    --muted:       #6b7280;
+    --border:      #e5e7eb;
+    --radius:      14px;
+    --shadow:      0 2px 12px rgba(0,0,0,0.07);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+
+  /* LOGIN */
+  #login-screen {
+    min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 24px;
+  }
+  .login-card {
+    background: var(--card); border-radius: 20px; box-shadow: var(--shadow);
+    padding: 52px 60px; text-align: center; max-width: 420px; width: 100%;
+  }
+  .login-pill {
+    display: inline-block; background: var(--brand); color: #fff;
+    font-family: 'DM Serif Display', serif; font-size: 18px;
+    padding: 8px 24px; border-radius: 50px; margin-bottom: 28px;
+  }
+  .login-card h2 { font-family: 'DM Serif Display', serif; font-size: 22px; font-weight: 400; margin-bottom: 8px; }
+  .login-card p { color: var(--muted); font-size: 14px; margin-bottom: 28px; }
+  .login-input {
+    width: 100%; padding: 14px 16px; border: 2px solid var(--border);
+    border-radius: 10px; font-family: 'DM Sans', sans-serif; font-size: 15px;
+    outline: none; margin-bottom: 14px; transition: border-color 0.2s; text-align: center; letter-spacing: 2px;
+  }
+  .login-input:focus { border-color: var(--brand); }
+  .login-btn {
+    width: 100%; padding: 14px; background: var(--brand); color: #fff; border: none;
+    border-radius: 50px; font-family: 'DM Sans', sans-serif; font-size: 15px;
+    font-weight: 600; cursor: pointer; transition: background 0.2s;
+  }
+  .login-btn:hover { background: var(--brand-dark); }
+  .login-error { color: #dc2626; font-size: 13px; margin-top: 10px; display: none; }
+
+  /* HEADER */
+  header {
+    background: var(--brand); padding: 0 40px; height: 64px;
+    display: flex; align-items: center; justify-content: space-between;
+    box-shadow: 0 2px 16px rgba(200,16,46,0.25); position: sticky; top: 0; z-index: 100;
+  }
+  .header-brand { display: flex; align-items: center; gap: 14px; }
+  .logo-pill {
+    background: #fff; color: var(--brand); font-family: 'DM Serif Display', serif;
+    font-size: 17px; padding: 6px 16px; border-radius: 50px;
+  }
+  .header-subtitle { color: rgba(255,255,255,0.75); font-size: 13px; }
+  #periodo-label { color: rgba(255,255,255,0.85); font-size: 13px; font-weight: 500; }
+
+  /* DASHBOARD */
+  #dashboard { display: none; padding: 32px 40px 60px; max-width: 1280px; margin: 0 auto; }
+  .section-label {
+    font-size: 11px; font-weight: 600; letter-spacing: 1.2px; text-transform: uppercase;
+    color: var(--muted); margin-bottom: 14px; margin-top: 32px;
+  }
+  .kpi-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 8px; }
+  .kpi-card {
+    background: var(--card); border-radius: var(--radius); padding: 22px 24px;
+    box-shadow: var(--shadow); border-top: 3px solid var(--brand);
+  }
+  .kpi-label { font-size: 12px; font-weight: 500; color: var(--muted); letter-spacing: 0.3px; margin-bottom: 8px; text-transform: uppercase; }
+  .kpi-value { font-family: 'DM Serif Display', serif; font-size: 28px; font-weight: 400; color: var(--text); line-height: 1; margin-bottom: 4px; }
+  .kpi-sub { font-size: 12px; color: var(--muted); }
+  .charts-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 8px; }
+  .chart-card { background: var(--card); border-radius: var(--radius); padding: 22px 24px; box-shadow: var(--shadow); }
+  .chart-card-wide { background: var(--card); border-radius: var(--radius); padding: 22px 24px; box-shadow: var(--shadow); margin-bottom: 8px; }
+  .chart-title { font-size: 13px; font-weight: 600; color: var(--text); margin-bottom: 16px; }
+  .chart-wrap { position: relative; height: 180px; }
+  .table-card { background: var(--card); border-radius: var(--radius); padding: 22px 24px; box-shadow: var(--shadow); overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  thead tr { border-bottom: 2px solid var(--border); }
+  th { text-align: left; font-size: 11px; font-weight: 600; letter-spacing: 0.8px; text-transform: uppercase; color: var(--muted); padding: 8px 12px; }
+  td { padding: 11px 12px; border-bottom: 1px solid var(--border); }
+  tbody tr:last-child td { border-bottom: none; }
+  tbody tr:hover { background: var(--brand-light); }
+  td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
+  footer { text-align: center; padding: 24px; font-size: 12px; color: var(--muted); }
+  @media (max-width: 900px) {
+    #dashboard { padding: 20px 16px 40px; }
+    .kpi-grid { grid-template-columns: repeat(2, 1fr); }
+    .charts-row { grid-template-columns: 1fr; }
+  }
+  @media (max-width: 480px) { .kpi-grid { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="login-screen">
+  <div class="login-card">
+    <div class="login-pill">Germanos</div>
+    <h2>Painel de Vendas</h2>
+    <p>Digite a senha para acessar os resultados.</p>
+    <input type="password" class="login-input" id="senha-input" placeholder="••••••••" onkeydown="if(event.key==='Enter')verificarSenha()" />
+    <button class="login-btn" onclick="verificarSenha()">Acessar</button>
+    <div class="login-error" id="login-error">Senha incorreta. Tente novamente.</div>
+  </div>
+</div>
+
+<!-- HEADER (oculto até login) -->
+<header id="main-header" style="display:none">
+  <div class="header-brand">
+    <div class="logo-pill">Germanos</div>
+    <span class="header-subtitle">Painel de Vendas</span>
+  </div>
+  <span id="periodo-label">Set/25 – Abr/26</span>
+</header>
+
+<!-- DASHBOARD -->
+<div id="dashboard">
+  <p class="section-label">Visão geral</p>
+  <div class="kpi-grid">
+    <div class="kpi-card"><div class="kpi-label">Receita Bruta</div><div class="kpi-value">R$ 80.850</div><div class="kpi-sub">8 meses de dados</div></div>
+    <div class="kpi-card"><div class="kpi-label">Pedidos</div><div class="kpi-value">830</div><div class="kpi-sub">1.417 unidades vendidas</div></div>
+    <div class="kpi-card"><div class="kpi-label">Ticket Médio</div><div class="kpi-value">R$ 97</div><div class="kpi-sub">por pedido</div></div>
+    <div class="kpi-card"><div class="kpi-label">Unidades / Pedido</div><div class="kpi-value">1.7</div><div class="kpi-sub">unidades em média</div></div>
+  </div>
+
+  <p class="section-label">Canais de venda</p>
+  <div class="charts-row">
+    <div class="chart-card"><div class="chart-title">Receita por Marketplace</div><div class="chart-wrap"><canvas id="chart-mkp"></canvas></div></div>
+    <div class="chart-card"><div class="chart-title">Pedidos por Marketplace</div><div class="chart-wrap"><canvas id="chart-mkp-pedidos"></canvas></div></div>
+  </div>
+
+  <p class="section-label">Evolução mensal</p>
+  <div class="chart-card-wide"><div class="chart-title">Receita Bruta por Mês</div><div class="chart-wrap" style="height:200px"><canvas id="chart-evolucao"></canvas></div></div>
+
+  <p class="section-label">Análise por canal</p>
+  <div class="chart-card-wide"><div class="chart-title">Share de Receita por Marketplace — mensal (%)</div><div class="chart-wrap" style="height:220px"><canvas id="chart-share"></canvas></div></div>
+
+  <p class="section-label">Evolução semanal</p>
+  <div class="chart-card-wide"><div class="chart-title">Receita Bruta por Semana</div><div class="chart-wrap" style="height:200px"><canvas id="chart-semanal"></canvas></div></div>
+
+  <p class="section-label">Ticket médio</p>
+  <div class="chart-card-wide"><div class="chart-title">Ticket Médio por Mês (R$)</div><div class="chart-wrap" style="height:200px"><canvas id="chart-ticket"></canvas></div></div>
+
+  <p class="section-label">Top SKUs</p>
+  <div class="table-card">
+    <table>
+      <thead><tr><th>Produto</th><th class="num">Unidades</th><th class="num">Receita</th><th class="num">% da Receita</th></tr></thead>
+      <tbody><tr>
+      <td>Palha Italiana Mista - Display com 12 unidades de 30g cada</td>
+      <td class="num">278</td>
+      <td class="num">R$ 24.060</td>
+      <td class="num">29.8%</td>
+    </tr><tr>
+      <td>Palha Italiana Zero Açúcar Doce De Leite C/ Whey 10 Un 30g</td>
+      <td class="num">242</td>
+      <td class="num">R$ 18.271</td>
+      <td class="num">22.6%</td>
+    </tr><tr>
+      <td>Palha Italiana Zero Açúcar Sabor Chocolate Display 10unx30g</td>
+      <td class="num">165</td>
+      <td class="num">R$ 11.466</td>
+      <td class="num">14.2%</td>
+    </tr><tr>
+      <td>Palha Italiana Pistache 30g Zero - Germanos Display 10unid</td>
+      <td class="num">122</td>
+      <td class="num">R$ 8.122</td>
+      <td class="num">10.0%</td>
+    </tr><tr>
+      <td>Palha Italiana Zero Açúcar Churros Germanos Com 10 Un De 30g</td>
+      <td class="num">97</td>
+      <td class="num">R$ 5.714</td>
+      <td class="num">7.1%</td>
+    </tr><tr>
+      <td>Palha Italiana Zero Açúcar Banoffee Com Whey 10 Un 30g</td>
+      <td class="num">114</td>
+      <td class="num">R$ 5.227</td>
+      <td class="num">6.5%</td>
+    </tr><tr>
+      <td>Palha Italiana Zero Açúcar Sabor Cookies - Display 10unx30g</td>
+      <td class="num">66</td>
+      <td class="num">R$ 4.107</td>
+      <td class="num">5.1%</td>
+    </tr><tr>
+      <td>Palha Italiana Zero Sabor Banoffee Germanos</td>
+      <td class="num">108</td>
+      <td class="num">R$ 1.099</td>
+      <td class="num">1.4%</td>
+    </tr><tr>
+      <td>Palha Italiana Zero Sabor Doce de Leite Germanos</td>
+      <td class="num">61</td>
+      <td class="num">R$ 825</td>
+      <td class="num">1.0%</td>
+    </tr><tr>
+      <td>Palha Italiana Zero Sabor Chocolate Germanos</td>
+      <td class="num">66</td>
+      <td class="num">R$ 684</td>
+      <td class="num">0.8%</td>
+    </tr></tbody>
+    </table>
+  </div>
+</div>
+
+<footer id="main-footer" style="display:none">
+  Germanos · Dados atualizados em 09/04/2026 · Oferta Ativa
+</footer>
+
+<script>
+const SENHA_HASH = 'Z2VybWFub3N4dHQ6Om9mZXJ0YWF0aXZh';
+const BRAND_COLOR = '#C8102E';
+const BRAND_LIGHT = 'rgba(200,16,46,0.08)';
+const PALETA = ["#C8102E","#E8354A","#a0051c","#FF6B6B","#FFB347","#4ECDC4","#45B7D1","#9B59B6"];
+const D = {"receitaTotal":80849.87999999983,"pedidosUnicos":830,"ticketMedio":97.40949397590342,"unidPedido":1.7072289156626506,"unidadesTotal":1417,"canaisR":[["Mercado Livre Fulfillment",73840.02999999985],["Shopee",6623.4499999999925],["Mercado Livre",238.9],["Amazon FBA Classic",147.5]],"canaisP":[["Mercado Livre Fulfillment",742],["Shopee",83],["Amazon FBA Classic",3],["Mercado Livre",2]],"meses":["2025-09","2025-10","2025-11","2025-12","2026-01","2026-02","2026-03","2026-04"],"mesReceita":{"2026-04":4517.609999999998,"2026-03":11216.91,"2026-02":12315.91,"2026-01":15931.729999999987,"2025-12":9104.809999999994,"2025-11":7543.619999999996,"2025-10":14583.819999999998,"2025-09":5635.469999999997},"mesPedidos":{"2026-04":39,"2026-03":119,"2026-02":185,"2026-01":181,"2025-12":76,"2025-11":75,"2025-10":110,"2025-09":45},"mesCanalReceita":{"2026-04":{"Mercado Livre Fulfillment":4172.829999999999,"Shopee":236.88000000000002,"Amazon FBA Classic":107.9},"2026-03":{"Mercado Livre Fulfillment":9247.46,"Shopee":1929.8500000000004,"Amazon FBA Classic":39.6},"2026-02":{"Mercado Livre Fulfillment":9922.4,"Shopee":2393.5100000000007},"2026-01":{"Mercado Livre Fulfillment":15038.319999999992,"Shopee":893.4099999999999},"2025-12":{"Mercado Livre Fulfillment":8637.309999999996,"Shopee":467.5},"2025-11":{"Mercado Livre Fulfillment":6841.319999999998,"Shopee":702.3},"2025-10":{"Mercado Livre Fulfillment":14384.819999999998,"Mercado Livre":199},"2025-09":{"Mercado Livre Fulfillment":5595.569999999997,"Mercado Livre":39.9}},"semanas":["2025-W36","2025-W37","2025-W38","2025-W39","2025-W40","2025-W41","2025-W42","2025-W43","2025-W44","2025-W45","2025-W46","2025-W47","2025-W48","2025-W49","2025-W50","2025-W51","2025-W52","2026-W01","2026-W02","2026-W03","2026-W04","2026-W05","2026-W06","2026-W07","2026-W08","2026-W09","2026-W10","2026-W11","2026-W12","2026-W13","2026-W14","2026-W15"],"semanaReceita":{"2026-W15":964.9,"2026-W14":4194.879999999998,"2026-W13":2638.310000000001,"2026-W12":2081.26,"2026-W11":4001.6699999999996,"2026-W10":1469.2900000000004,"2026-W09":1803.32,"2026-W08":2366.4699999999993,"2026-W07":2433.83,"2026-W06":6015.7,"2026-W05":3594.23,"2026-W04":4368.17,"2026-W03":2528.43,"2026-W02":4294.37,"2026-W01":1510.0100000000002,"2025-W52":1469.27,"2025-W51":4055.360000000001,"2025-W50":2644.42,"2025-W49":653.08,"2025-W48":1193.3900000000003,"2025-W47":1953.7100000000005,"2025-W46":1732.7300000000002,"2025-W45":2391.43,"2025-W44":3663.310000000001,"2025-W43":2519.01,"2025-W42":3454.2299999999996,"2025-W41":3070.58,"2025-W40":3547.4100000000017,"2025-W39":1300.4499999999998,"2025-W38":1001.6999999999999,"2025-W37":766.88,"2025-W36":1168.08},"todosCanais":["Mercado Livre Fulfillment","Shopee","Amazon FBA Classic","Mercado Livre"],"periodoLabel":"Set/25 – Abr/26"};
+
+function verificarSenha() {
+  const input = document.getElementById('senha-input').value;
+  const hash = btoa(unescape(encodeURIComponent(input + '::ofertaativa')));
+  if (hash === SENHA_HASH) {
+    document.getElementById('login-screen').style.display = 'none';
+    document.getElementById('main-header').style.display = 'flex';
+    document.getElementById('dashboard').style.display = 'block';
+    document.getElementById('main-footer').style.display = 'block';
+    renderCharts();
+  } else {
+    document.getElementById('login-error').style.display = 'block';
+    document.getElementById('senha-input').value = '';
+  }
+}
+
+function fmtBRL(v) { return v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL', minimumFractionDigits: 0, maximumFractionDigits: 0 }); }
+function monthLabel(key) {
+  const [y, m] = key.split('-');
+  const months = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+  return months[+m-1] + '/' + y.slice(2);
+}
+function isoWeekLabel(key) { const [y,w] = key.split('-W'); return 'Sem ' + (+w) + '/' + y.slice(2); }
+
+let charts = {};
+function dc(id) { if(charts[id]) { charts[id].destroy(); delete charts[id]; } }
+
+function renderCharts() {
+  const { canaisR, canaisP, meses, mesReceita, mesPedidos, mesCanalReceita,
+          semanas, semanaReceita, todosCanais } = D;
+  const fo = { family: 'DM Sans', size: 11 };
+  const fc = '#6b7280';
+  const tick = (v) => 'R$' + (v >= 1000 ? (v/1000).toFixed(0)+'k' : v);
+
+  dc('mkp');
+  charts['mkp'] = new Chart(document.getElementById('chart-mkp'), {
+    type:'bar', data:{ labels: canaisR.map(c=>c[0]), datasets:[{ data: canaisR.map(c=>c[1]),
+      backgroundColor: canaisR.map((_,i)=>PALETA[i%PALETA.length]), borderRadius:6, borderSkipped:false }]},
+    options:{ responsive:true, maintainAspectRatio:false,
+      plugins:{ legend:{display:false}, tooltip:{callbacks:{label:ctx=>fmtBRL(ctx.raw)}}},
+      scales:{ x:{grid:{display:false},ticks:{font:fo,color:fc}}, y:{grid:{color:'#f0f0f0'},ticks:{font:fo,color:fc,callback:tick}}}}
+  });
+
+  dc('mkp-pedidos');
+  charts['mkp-pedidos'] = new Chart(document.getElementById('chart-mkp-pedidos'), {
+    type:'bar', data:{ labels: canaisP.map(c=>c[0]), datasets:[{ data: canaisP.map(c=>c[1]),
+      backgroundColor: canaisP.map((_,i)=>PALETA[i%PALETA.length]), borderRadius:6, borderSkipped:false }]},
+    options:{ responsive:true, maintainAspectRatio:false,
+      plugins:{ legend:{display:false}, tooltip:{callbacks:{label:ctx=>ctx.raw+' pedidos'}}},
+      scales:{ x:{grid:{display:false},ticks:{font:fo,color:fc}}, y:{grid:{color:'#f0f0f0'},ticks:{font:fo,color:fc}}}}
+  });
+
+  dc('evolucao');
+  charts['evolucao'] = new Chart(document.getElementById('chart-evolucao'), {
+    type:'line', data:{ labels:meses.map(monthLabel), datasets:[{ data:meses.map(m=>mesReceita[m]||0),
+      borderColor:BRAND_COLOR, backgroundColor:BRAND_LIGHT, fill:true, tension:0.4,
+      pointBackgroundColor:BRAND_COLOR, pointRadius:5, pointHoverRadius:7, borderWidth:2.5 }]},
+    options:{ responsive:true, maintainAspectRatio:false,
+      plugins:{ legend:{display:false}, tooltip:{callbacks:{label:ctx=>fmtBRL(ctx.raw)}}},
+      scales:{ x:{grid:{display:false},ticks:{font:fo,color:fc}}, y:{grid:{color:'#f0f0f0'},ticks:{font:fo,color:fc,callback:tick}}}}
+  });
+
+  const shareDatasets = todosCanais.map((canal,i) => ({
+    label: canal,
+    data: meses.map(m => { const tot=mesReceita[m]||0; const v=(mesCanalReceita[m]||{})[canal]||0; return tot>0?Math.round(v/tot*100):0; }),
+    backgroundColor: PALETA[i%PALETA.length], borderRadius:0, borderSkipped:false,
+  }));
+  dc('share');
+  charts['share'] = new Chart(document.getElementById('chart-share'), {
+    type:'bar', data:{ labels:meses.map(monthLabel), datasets:shareDatasets },
+    options:{ responsive:true, maintainAspectRatio:false,
+      plugins:{ legend:{position:'bottom',labels:{font:fo,color:fc,boxWidth:12,padding:16}},
+        tooltip:{callbacks:{label:ctx=>`${ctx.dataset.label}: ${ctx.raw}%`}}},
+      scales:{ x:{stacked:true,grid:{display:false},ticks:{font:fo,color:fc}},
+        y:{stacked:true,max:100,grid:{color:'#f0f0f0'},ticks:{font:fo,color:fc,callback:v=>v+'%'}}}}
+  });
+
+  dc('semanal');
+  charts['semanal'] = new Chart(document.getElementById('chart-semanal'), {
+    type:'line', data:{ labels:semanas.map(isoWeekLabel), datasets:[{ data:semanas.map(s=>semanaReceita[s]||0),
+      borderColor:BRAND_COLOR, backgroundColor:BRAND_LIGHT, fill:true, tension:0.3,
+      pointBackgroundColor:BRAND_COLOR, pointRadius:4, pointHoverRadius:6, borderWidth:2 }]},
+    options:{ responsive:true, maintainAspectRatio:false,
+      plugins:{ legend:{display:false}, tooltip:{callbacks:{label:ctx=>fmtBRL(ctx.raw)}}},
+      scales:{ x:{grid:{display:false},ticks:{font:{family:'DM Sans',size:10},color:fc,maxTicksLimit:16}},
+        y:{grid:{color:'#f0f0f0'},ticks:{font:fo,color:fc,callback:tick}}}}
+  });
+
+  dc('ticket');
+  charts['ticket'] = new Chart(document.getElementById('chart-ticket'), {
+    type:'line', data:{ labels:meses.map(monthLabel), datasets:[{ data:meses.map(m=>mesPedidos[m]>0?mesReceita[m]/mesPedidos[m]:0),
+      borderColor:BRAND_COLOR, backgroundColor:BRAND_LIGHT, fill:true, tension:0.4,
+      pointBackgroundColor:BRAND_COLOR, pointRadius:5, pointHoverRadius:7, borderWidth:2.5 }]},
+    options:{ responsive:true, maintainAspectRatio:false,
+      plugins:{ legend:{display:false}, tooltip:{callbacks:{label:ctx=>fmtBRL(ctx.raw)}}},
+      scales:{ x:{grid:{display:false},ticks:{font:fo,color:fc}}, y:{grid:{color:'#f0f0f0'},ticks:{font:fo,color:fc,callback:tick}}}}
+  });
+}
+</script>
+</body>
+</html>
